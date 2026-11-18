@@ -332,10 +332,101 @@ const chatEl=document.getElementById('chat'),logEl=document.getElementById('log'
 document.getElementById('chatBtn').append(ico(["..xxxxxxx.",".x.......x",".x.x.x.x.x",".x.......x","..xxxxxxx.","...xx.....","....x....."],{x:'#ffe9b0'},3));
 document.getElementById('chatBtn').onclick=()=>{chatEl.hidden=!chatEl.hidden;if(!chatEl.hidden)ci.focus()};
 function say(who,txt,mine){const d=document.createElement('div');d.textContent=who+': '+txt;if(mine)d.className='o';logEl.append(d);while(logEl.children.length>30)logEl.firstChild.remove();logEl.scrollTop=1e9}
-const RC=['🔥 모닥불','타닥타닥…','오늘 밤은 길어요','따뜻하죠?','별이 참 많네요'],RF=['🌊 호수','찰랑…','쉿, 물고기가 놀라요','달빛이 예쁘죠?'];
-let bubT=0;
-document.getElementById('cf').onsubmit=e=>{e.preventDefault();const t=ci.value.trim();if(!t)return;ci.value='';say(Look.name,t,1);bub.textContent=t;bub.hidden=false;bubT=6;
-  setTimeout(()=>{const r=Mode.m==='fish'?RF:RC;say(r[0],r[1+Math.floor(rnd()*(r.length-1))])},1200+rnd()*1500)};
+const RC=let bubT = 0;
+let chatConnection;
+
+const chatForm = document.getElementById('cf');
+const sendButton = chatForm.querySelector('button');
+
+function connectChat() {
+  if (!chatConnection) {
+    chatConnection = (async () => {
+      const sdk = 'https://www.gstatic.com/firebasejs/11.10.0/';
+      const [appSdk, authSdk, dbSdk] = await Promise.all([
+        import(sdk + 'firebase-app.js'),
+        import(sdk + 'firebase-auth.js'),
+        import(sdk + 'firebase-firestore.js')
+      ]);
+
+      const firebaseConfig = {
+        apiKey: "AIzaSyBgi_ecUsCZ8lbzDPVEJ5-K4Uf9weeX__4",
+        authDomain: "kjl0103-23dae.firebaseapp.com",
+        projectId: "kjl0103-23dae",
+        appId: "1:838854934280:web:cf33dfc7aebc418e70f6bd"
+      };
+
+      const app = appSdk.getApps().length
+        ? appSdk.getApp()
+        : appSdk.initializeApp(firebaseConfig);
+      const auth = authSdk.getAuth(app);
+      await auth.authStateReady();
+      const user = auth.currentUser
+        || (await authSdk.signInAnonymously(auth)).user;
+
+      const db = dbSdk.getFirestore(app);
+      const messages = dbSdk.collection(db, 'rooms', 'campfire', 'messages');
+      const recent = dbSdk.query(
+        messages,
+        dbSdk.orderBy('createdAt', 'desc'),
+        dbSdk.limit(30)
+      );
+
+      dbSdk.onSnapshot(recent, (snapshot) => {
+        logEl.replaceChildren();
+        for (const doc of [...snapshot.docs].reverse()) {
+          const message = doc.data();
+          say(message.name, message.text, message.uid === user.uid);
+        }
+      }, (error) => {
+        console.error(error);
+        chatConnection = undefined;
+        say('채팅', '대화를 불러오지 못했어요. 채팅창을 다시 열어 주세요.');
+      });
+
+      return { dbSdk, messages, user };
+    })().catch((error) => {
+      chatConnection = undefined;
+      throw error;
+    });
+  }
+
+  return chatConnection;
+}
+
+document.getElementById('chatBtn').addEventListener('click', () => {
+  if (chatEl.hidden) return;
+  connectChat().catch((error) => {
+    console.error(error);
+    say('채팅', '연결하지 못했어요. 채팅창을 다시 열어 주세요.');
+  });
+});
+
+chatForm.onsubmit = async (event) => {
+  event.preventDefault();
+  const message = ci.value.trim();
+  if (!message || sendButton.disabled) return;
+
+  sendButton.disabled = true;
+  try {
+    const { dbSdk, messages, user } = await connectChat();
+    await dbSdk.addDoc(messages, {
+      uid: user.uid,
+      name: Look.name.trim().slice(0, 8) || '나그네',
+      text: message,
+      createdAt: dbSdk.serverTimestamp()
+    });
+
+    if (ci.value.trim() === message) ci.value = '';
+    bub.textContent = message;
+    bub.hidden = false;
+    bubT = 6;
+  } catch (error) {
+    console.error(error);
+    say('채팅', '메시지를 보내지 못했어요. 다시 시도해 주세요.');
+  } finally {
+    sendButton.disabled = false;
+  }
+};
 function placeHead(){headEl.style.left=(offX+(SX+Character.x+5)*S)/dpr+'px';headEl.style.top=(offY+(SY+Character.gy-36)*S)/dpr+'px'}
 function applyMode(m){Mode.m=m;const C=Character;C.SX=m==='fish'?88:124;C.SGY=m==='fish'?168:152;C.x=C.SX;C.gy=C.SGY;C.st=false;C.arm=m==='fish'?'hold':'down';C.item='';
   if(m==='fish'){Fish.s='wait';Fish.t=0;Fish.next=5+rnd()*6;toast('찌를 지켜보다가 ‘!’가 뜨면 당겨 보세요')}else toast('따뜻한 모닥불 곁으로 돌아왔어요')}
