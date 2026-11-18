@@ -456,4 +456,92 @@ view.addEventListener('pointerdown',e=>{if(Character.busy||Mode.to)return;
   const x=(e.clientX*dpr-offX)/S-SX,y=(e.clientY*dpr-offY)/S-SY,h=Items.hit(x,y);if(!h)return;
   Character.act(h.k==='p'?Acts.eatPotato(h.o):Acts.eatMallow(h.o))});
 resize();Sky.init();Forest.build();drawSnd();buildStart();startLoop();
+ const friendSeats = [151, 216, 96, 244, 68];
+let campfireFriends = [];
+
+async function connectCampfireFriends() {
+  try {
+    const { user } = await connectChat();
+    const sdk = await import(
+      'https://www.gstatic.com/firebasejs/11.10.0/firebase-database.js'
+    );
+    const db = sdk.getDatabase(
+      undefined,
+      'https://kjl0103-23dae-default-rtdb.firebaseio.com'
+    );
+    const room = sdk.ref(db, 'campfirePresence');
+    const myConnections = sdk.child(room, user.uid);
+    let myConnectionKey;
+
+    sdk.onValue(room, (snapshot) => {
+      const friends = [];
+      snapshot.forEach((account) => {
+        account.forEach((connection) => {
+          if (account.key === user.uid && connection.key === myConnectionKey) return;
+          friends.push(connection.val());
+        });
+      });
+      campfireFriends = friends.slice(0, friendSeats.length);
+    }, (error) => {
+      campfireFriends = [];
+      console.error('친구 목록을 불러오지 못했어요.', error);
+      toast('친구 목록에 연결하지 못했어요');
+    });
+
+    sdk.onValue(sdk.ref(db, '.info/connected'), async (snapshot) => {
+      if (snapshot.val() !== true) return;
+
+      const connection = sdk.push(myConnections);
+      myConnectionKey = connection.key;
+      try {
+        await sdk.onDisconnect(connection).remove();
+        await sdk.set(connection, {
+          name: Look.name.trim().slice(0, 8) || '나그네',
+          hat: Look.hat,
+          coat: Look.coat,
+          pants: Look.pants
+        });
+      } catch (error) {
+        console.error('캐릭터 접속 정보를 저장하지 못했어요.', error);
+        toast('캐릭터 접속 정보를 저장하지 못했어요');
+      }
+    });
+  } catch (error) {
+    console.error('친구 캐릭터 기능에 연결하지 못했어요.', error);
+    toast('친구 캐릭터 기능에 연결하지 못했어요');
+  }
+}
+
+document.querySelector('#start .btn').addEventListener(
+  'click', connectCampfireFriends, { once: true }
+);
+
+const drawOriginalCampfireGlow = Campfire.glow;
+Campfire.glow = function () {
+  g.save();
+  g.font = 'bold 8px sans-serif';
+  g.textAlign = 'center';
+
+  campfireFriends.forEach((outfit, index) => {
+    const x = friendSeats[index];
+    Character.render.call({
+      x,
+      gy: 152,
+      outfit,
+      st: true,
+      tilt: 0,
+      eyes: 'open',
+      bob: Character.bob,
+      hand() {
+        return [x + 9, 140 - this.bob()];
+      }
+    });
+
+    g.fillStyle = '#ffe9b0';
+    g.fillText(outfit.name, x + 5, 113);
+  });
+
+  g.restore();
+  drawOriginalCampfireGlow.call(this);
+}; 
 </script></body></html>
