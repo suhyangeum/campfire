@@ -332,7 +332,7 @@ const chatEl=document.getElementById('chat'),logEl=document.getElementById('log'
 document.getElementById('chatBtn').append(ico(["..xxxxxxx.",".x.......x",".x.x.x.x.x",".x.......x","..xxxxxxx.","...xx.....","....x....."],{x:'#ffe9b0'},3));
 document.getElementById('chatBtn').onclick=()=>{chatEl.hidden=!chatEl.hidden;if(!chatEl.hidden)ci.focus()};
 function say(who,txt,mine){const d=document.createElement('div');d.textContent=who+': '+txt;if(mine)d.className='o';logEl.append(d);while(logEl.children.length>30)logEl.firstChild.remove();logEl.scrollTop=1e9}
-const RC=let bubT = 0;
+let bubT = 0;
 let chatConnection;
 
 const chatForm = document.getElementById('cf');
