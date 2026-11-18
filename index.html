@@ -213,7 +213,8 @@ const Character={SX:124,SGY:152,x:124,gy:152,st:false,arm:'down',item:'',eyes:'o
     this.bt-=dt;if(this.bt<=0){this.blink=.14;this.bt=3+rnd()*3}if(this.blink>0)this.blink-=dt;
     const t=HAND[this.arm],k=Math.min(1,dt*12);this.ax+=(t[0]-this.ax)*k;this.ay+=(t[1]-this.ay)*k},
   render(){const c=this,ox=Math.round(c.x),gy=Math.round(c.gy),oy=gy-6,ob=oy-c.bob(),hx=ox+c.tilt,hy=ob-(c.tilt?1:0);
-       const outfit = c.outfit || Look;
+     const outfit = c.outfit || Look;
+    const PANTS=outfit.pants,BOOT='#4a2f22',COAT=outfit.coat,SC='#d9573a',SKIN='#f0c9a0',HAT=outfit.hat,EYE='#2a1a1a';
     const PANTS=outfit.pants,BOOT='#4a2f22',COAT=outfit.coat,SC='#d9573a',SKIN='#f0c9a0',HAT=outfit.hat,EYE='#2a1a1a';
     if(c.st){const s=c.walk?Math.floor(T*7)%2:0;R(g,ox+1+s,oy-3,3,7,PANTS);R(g,ox+6-s,oy-3,3,7,PANTS);R(g,ox+1+s,gy-2,4,2,BOOT);R(g,ox+6-s,gy-2,4,2,BOOT)}
     else{R(g,ox+2,oy-4,11,3,PANTS);R(g,ox+11,oy-1,3,5,PANTS);R(g,ox+11,gy-2,5,2,BOOT)}
@@ -327,7 +328,7 @@ function buildStart(){
   [['hat','모자'],['coat','옷'],['pants','바지']].forEach(([k,l])=>{const row=document.createElement('div');row.className='row';row.append(l);
     SW[k].forEach(c=>{const b=document.createElement('button');b.className='sw';b.style.background=c;b.dataset.k=k;b.dataset.c=c;b.setAttribute('aria-label',l+' '+c);b.onclick=()=>{Look[k]=c;sel()};row.append(b)});startEl.append(row)});
   const go=document.createElement('button');go.className='btn';go.textContent='시작하기';
-  go.onclick=()=>{try{localStorage.setItem('campfireLook',JSON.stringify(Look))}catch(e){}startEl.hidden=true;document.body.classList.add('on')};
+  go.onclick=  go.addEventListener('click', startPresence);
   startEl.append(go);sel();tagEl.textContent=Look.name}
 const chatEl=document.getElementById('chat'),logEl=document.getElementById('log'),ci=document.getElementById('ci');
 document.getElementById('chatBtn').append(ico(["..xxxxxxx.",".x.......x",".x.x.x.x.x",".x.......x","..xxxxxxx.","...xx.....","....x....."],{x:'#ffe9b0'},3));
