@@ -327,7 +327,7 @@ function buildStart(){
   [['hat','모자'],['coat','옷'],['pants','바지']].forEach(([k,l])=>{const row=document.createElement('div');row.className='row';row.append(l);
     SW[k].forEach(c=>{const b=document.createElement('button');b.className='sw';b.style.background=c;b.dataset.k=k;b.dataset.c=c;b.setAttribute('aria-label',l+' '+c);b.onclick=()=>{Look[k]=c;sel()};row.append(b)});startEl.append(row)});
   const go=document.createElement('button');go.className='btn';go.textContent='시작하기';
-  go.onclick=  go.addEventListener('click', startPresence);  go.onclick=()=>{try{localStorage.setItem('campfireLook',JSON.stringify(Look))}catch(e){}startEl.hidden=true;document.body.classList.add('on')};
+  go.onclick=()=>{try{localStorage.setItem('campfireLook',JSON.stringify(Look))}catch(e){}startEl.hidden=true;document.body.classList.add('on')};
   startEl.append(go);sel();tagEl.textContent=Look.name}
 const chatEl=document.getElementById('chat'),logEl=document.getElementById('log'),ci=document.getElementById('ci');
 document.getElementById('chatBtn').append(ico(["..xxxxxxx.",".x.......x",".x.x.x.x.x",".x.......x","..xxxxxxx.","...xx.....","....x....."],{x:'#ffe9b0'},3));
